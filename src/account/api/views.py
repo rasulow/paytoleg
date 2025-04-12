@@ -6,6 +6,8 @@ from drf_yasg.utils import swagger_auto_schema
 from dotenv import load_dotenv
 from account.api import serializers
 from account.models import CustomUser
+from auth.logging_config import logger
+
 
 load_dotenv()
 
@@ -112,10 +114,13 @@ class UserRegistrationResendVerificationPhoneAPIView(APIView):
                     "detail": "Verification code resent successfully",
                     "expiration_time_in_minutes": int(env.get('PHONE_NUMBER_VERIFICATION_CODE_EXPIRATION_MINUTES', 10))
                 }
+                logger.info(f"Successfully resent verification code")
                 return Response(response_data, status=status.HTTP_201_CREATED)
             except Exception as e:
+                logger.error(f"Error resending verification code: {str(e)}")
                 return Response(
                     {"detail": f"Error resending verification code: {str(e)}"},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
+        logger.warning("Invalid resend verification data received")
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

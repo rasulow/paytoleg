@@ -4,6 +4,7 @@ from django.utils import timezone
 from rest_framework import serializers
 from dotenv import load_dotenv
 from account import models, tasks, services
+from auth.logging_config import logger
 
 load_dotenv()
 
@@ -43,20 +44,24 @@ class UserRegisterSerializer(serializers.Serializer):
 
         # Check if either email or phone_number is provided
         if not email and not phone_number:
+            logger.warning('Registration attempt without email and phone number')
             raise serializers.ValidationError(
                 {'non_field_errors': 'Either email or phone number is required.'}
             )
 
         # Check if passwords match
         if password1 != password2:
+            logger.warning('Registration attempt with mismatched passwords')
             raise serializers.ValidationError({'password2': 'Passwords must match.'})
 
         # Check if email is unique
         if email and models.CustomUser.objects.filter(email=email).exists():
+            logger.warning(f'Registration attempt with existing email: {email}')
             raise serializers.ValidationError({'email': 'A user with this email already exists.'})
 
         # Check if phone number is unique
         if phone_number and models.CustomUser.objects.filter(phone_number=phone_number).exists():
+            logger.warning(f'Registration attempt with existing phone number: {phone_number}')
             raise serializers.ValidationError(
                 {'phone_number': 'A user with this phone number already exists.'}
             )
@@ -73,12 +78,14 @@ class UserRegisterSerializer(serializers.Serializer):
                 first_name=validated_data['first_name'],
                 last_name=validated_data['last_name'],
             )
+            logger.info(f'New user created successfully. ID: {user.id}, Email: {user.email}, Phone: {user.phone_number}')
 
             if validated_data.get('phone_number'):
                 self._create_phone_verification(user, validated_data['phone_number'])
 
             return user
         except Exception as e:
+            logger.error(f'Error creating user: {str(e)}', exc_info=True)
             raise serializers.ValidationError({'non_field_errors': f'Error creating user: {str(e)}'})
 
     def _create_phone_verification(self, user, phone_number):
@@ -90,6 +97,7 @@ class UserRegisterSerializer(serializers.Serializer):
             code=verification_code,
             is_verified=False
         )
+        logger.info(f'Phone verification code created for user {user.id}')
         return services.send_sms(phone_number, verification_code)
 
 
@@ -104,18 +112,22 @@ class UserRegistrationVerifyPhoneSerializer(serializers.Serializer):
         code = attrs.get('code')
 
         if not phone_number or not code:
+            logger.warning('Phone verification attempt without phone number or code')
             raise serializers.ValidationError({'non_field_errors': 'Phone number and code are required.'})
 
         try:
             phone_verification = models.PhoneVerification.objects.get(phone_number=phone_number, code=code)
         except models.PhoneVerification.DoesNotExist:
+            logger.warning(f'Invalid phone verification attempt for number: {phone_number}')
             raise serializers.ValidationError({'non_field_errors': 'Invalid phone number or code.'})
 
         if phone_verification.is_verified:
+            logger.info(f'Attempted verification of already verified phone number: {phone_number}')
             raise serializers.ValidationError({'phone_number': 'This phone number is already verified.'})
 
         expiration_time = timezone.now() - timedelta(minutes=int(env.get('PHONE_NUMBER_VERIFICATION_CODE_EXPIRATION_MINUTES', 10)))
         if phone_verification.created_at < expiration_time:
+            logger.warning(f'Expired verification code used for phone number: {phone_number}')
             raise serializers.ValidationError({'code': 'The verification code has expired.'})
 
         attrs['phone_verification'] = phone_verification
@@ -126,6 +138,7 @@ class UserRegistrationVerifyPhoneSerializer(serializers.Serializer):
         phone_verification = validated_data['phone_verification']
         phone_verification.is_verified = True
         phone_verification.save()
+        logger.info(f'Phone number verified successfully for user {phone_verification.user.id}')
         return phone_verification
 
 
@@ -138,14 +151,17 @@ class UserRegistrationResendPhoneVerificationSerializer(serializers.Serializer):
         phone_number = attrs.get('phone_number')
 
         if not phone_number:
+            logger.warning('Resend verification attempt without phone number')
             raise serializers.ValidationError({'phone_number': 'Phone number is required.'})
 
         try:
             phone_verification = models.PhoneVerification.objects.get(phone_number=phone_number)
         except models.PhoneVerification.DoesNotExist:
+            logger.warning(f'Resend verification attempt for unregistered phone number: {phone_number}')
             raise serializers.ValidationError({'phone_number': 'This phone number is not registered.'})
 
         if phone_verification.is_verified:
+            logger.info(f'Attempted resend verification for already verified number: {phone_number}')
             raise serializers.ValidationError({'phone_number': 'This phone number is already verified.'})
 
         attrs['phone_verification'] = phone_verification
@@ -167,6 +183,8 @@ class UserRegistrationResendPhoneVerificationSerializer(serializers.Serializer):
                 is_verified=False
             )
             services.send_sms(phone_number, verification_code)
+            logger.info(f'New verification code sent to phone number for user {user.id}')
             return user
         except models.CustomUser.DoesNotExist:
+            logger.error(f'User not found for phone number: {phone_number}')
             raise serializers.ValidationError({'phone_number': 'User with this phone number not found.'})

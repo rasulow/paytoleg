@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import PermissionsMixin, AbstractBaseUser
 from account.managers import CustomUserManager
+from auth.logging_config import logger
 import random
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):
@@ -15,6 +16,29 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     is_phone_verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        is_new = self._state.adding
+        super().save(*args, **kwargs)
+
+        if is_new:
+            logger.info(
+                'New user created',
+                extra={
+                    'user_id': self.id,
+                    'email': self.email,
+                    'phone_number': self.phone_number
+                }
+            )
+        else:
+            logger.info(
+                'User updated',
+                extra={
+                    'user_id': self.id,
+                    'email': self.email,
+                    'phone_number': self.phone_number
+                }
+            )
 
     objects = CustomUserManager()
 
@@ -52,11 +76,28 @@ class PhoneVerification(models.Model):
 
 
     def save(self, *args, **kwargs):
+        is_new = self._state.adding
         super().save(*args, **kwargs)
+
+        if is_new:
+            logger.info(
+                'New phone verification created',
+                extra={
+                    'user_id': self.user.id,
+                    'phone_number': self.phone_number
+                }
+            )
 
         if self.is_verified and not self.user.is_phone_verified:
             self.user.is_phone_verified = True
             self.user.save()
+            logger.info(
+                'Phone number verified successfully',
+                extra={
+                    'user_id': self.user.id,
+                    'phone_number': self.phone_number
+                }
+            )
 
     @staticmethod
     def gen_code():

@@ -4,7 +4,6 @@ from account.models import CustomUser
 class EmailOrPhoneAuthenticationBackend(BaseBackend):
     def authenticate(self, request, username=None, password=None, **kwargs):
         username = username or kwargs.get('phone_number') or kwargs.get('email')
-        print(username, password)
         try:
             user = CustomUser.objects.get(email=username)
         except CustomUser.DoesNotExist:
