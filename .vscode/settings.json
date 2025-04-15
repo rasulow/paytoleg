@@ -6,7 +6,7 @@
     "python.analysis.inlayHints.variableTypes": true,
     "python.analysis.diagnosticMode": "workspace",
     "python.analysis.importFormat": "absolute",
-    "python.languageServer": "Pylance",
+    "python.languageServer": "None",
     "python.analysis.extraPaths": ["./src"],
     "python.analysis.diagnosticSeverityOverrides": {
         "reportGeneralTypeIssues": "information",

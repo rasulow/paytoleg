@@ -3,7 +3,7 @@ version: "3.9"
 services:
   web:
     build: .
-    container_name: paytoleg_auth
+    container_name: auth
     command: >
       sh -c "
         python manage.py makemigrations &&
@@ -23,7 +23,7 @@ services:
 
   db:
     image: postgres:16
-    container_name: paytoleg_postgressql
+    container_name: auth_postgressql
     restart: always
     volumes:
       - postgres_data:/var/lib/postgresql/data/
@@ -34,7 +34,7 @@ services:
 
   pgadmin:
     image: dpage/pgadmin4:latest
-    container_name: paytoleg_pgadmin
+    container_name: auth_pgadmin
     restart: always
     ports:
       - "5050:80"
@@ -48,7 +48,7 @@ services:
 
   redis:
     image: redis:7
-    container_name: paytoleg_redis
+    container_name: auth_redis
     command: redis-server --requirepass redis_password
     ports:
       - "6379:6379"
@@ -57,7 +57,7 @@ services:
 
   celery:
     build: .
-    container_name: paytoleg_celery
+    container_name: auth_celery
     command: celery -A auth worker -l info
     volumes:
       - ./src:/app
