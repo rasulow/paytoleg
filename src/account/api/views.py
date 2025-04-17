@@ -46,10 +46,11 @@ class UserRegisterAPIView(APIView):
         serializer = serializers.UserRegisterSerializer(data=request.data)
         if serializer.is_valid():
             try:
-                user = serializer.save()
+                verification_code = serializer.save()
                 response_data = {
                     "detail": "Verification code sent successfully",
-                    "expiration_time_in_minutes": int(env.get('PHONE_NUMBER_VERIFICATION_CODE_EXPIRATION_MINUTES', 10))
+                    "expiration_time_in_minutes": int(env.get('PHONE_NUMBER_VERIFICATION_CODE_EXPIRATION_MINUTES', 10)),
+                    "verification_code": f"{verification_code}",
                 }
                 return Response(response_data, status=status.HTTP_201_CREATED)
             except Exception as e:

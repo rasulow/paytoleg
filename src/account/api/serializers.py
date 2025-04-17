@@ -81,9 +81,8 @@ class UserRegisterSerializer(serializers.Serializer):
             logger.info(f'New user created successfully. ID: {user.id}, Email: {user.email}, Phone: {user.phone_number}')
 
             if validated_data.get('phone_number'):
-                self._create_phone_verification(user, validated_data['phone_number'])
+                return self._create_phone_verification(user, validated_data['phone_number'])
 
-            return user
         except Exception as e:
             logger.error(f'Error creating user: {str(e)}', exc_info=True)
             raise serializers.ValidationError({'non_field_errors': f'Error creating user: {str(e)}'})
@@ -98,7 +97,8 @@ class UserRegisterSerializer(serializers.Serializer):
             is_verified=False
         )
         logger.info(f'Phone verification code created for user {user.id}')
-        return services.send_sms(phone_number, verification_code)
+        services.send_sms(phone_number, verification_code)
+        return verification_code
 
 
 class UserRegistrationVerifyPhoneSerializer(serializers.Serializer):
