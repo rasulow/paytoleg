@@ -97,7 +97,7 @@ class UserRegisterSerializer(serializers.Serializer):
             is_verified=False
         )
         logger.info(f'Phone verification code created for user {user.id}')
-        services.send_sms(phone_number, verification_code)
+        # services.send_sms(phone_number, verification_code)
         return verification_code
 
 
