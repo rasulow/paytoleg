@@ -18,7 +18,7 @@ class TransactionLogAdmin(admin.ModelAdmin):
     list_filter = ('status', 'currency', 'created_at')
     search_fields = ('transaction_id', 'sender', 'receiver')
     readonly_fields = ('created_at', 'updated_at')
-    ordering = ('-created_at',)
+    ordering = ('-created_at', 'updated_at')
 
     def status_colored(self, obj):
         colors = {
