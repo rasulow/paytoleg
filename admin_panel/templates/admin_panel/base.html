@@ -240,13 +240,17 @@
             <img src="/static/images/logo.png" alt="PayToLeg">
         </div>
         <div class="nav-item {% if request.path == '/' %}active{% endif %}" data-menu="dashboard">
-            ПАНЕЛЬ
+            <a href="{% url 'index' %}">
+                ПАНЕЛЬ
+            </a>
         </div>
         <div class="nav-item {% if 'settings' in request.path %}active{% endif %}" data-menu="settings">
             НАСТРОЙКИ <span class="arrow">▶</span>
         </div>
         <div class="nav-item {% if 'plugins' in request.path %}active{% endif %}" data-menu="plugins">
-            ПЛАГИНЫ <span class="arrow">▶</span>
+            <a href="{% url plugins %}">
+                ПЛАГИНЫ
+            </a>
         </div>
         <div class="nav-item {% if 'logs' in request.path %}active{% endif %}" data-menu="logs">
             ЛОГИ ТРАНЗАКЦИЙ
