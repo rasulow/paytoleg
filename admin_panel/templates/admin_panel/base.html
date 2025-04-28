@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}PayToLeg - Административная Панель{% endblock %}</title>
+    <style>
+        :root {
+            --main-bg-color: #f2f2f2;
+            --sidebar-bg-color: #e6e6e6;
+            --submenu-bg-color: #f0f0f0;
+            --content-bg-color: #ffffff;
+            --text-color: #333333;
+            --border-color: #cccccc;
+            --accent-color: #4CAF50;
+            --hover-color: #45a049;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            display: flex;
+            background-color: var(--main-bg-color);
+            color: var(--text-color);
+            overflow-x: hidden;
+        }
+
+        .sidebar {
+            width: 250px;
+            height: 100vh;
+            background-color: var(--sidebar-bg-color);
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 100;
+        }
+
+        .submenu {
+            width: 250px;
+            height: 100vh;
+            background-color: var(--submenu-bg-color);
+            position: fixed;
+            left: 250px;
+            top: 0;
+            z-index: 99;
+            display: none;
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+        }
+
+        .third-level-menu {
+            width: 250px;
+            height: 100vh;
+            background-color: var(--content-bg-color);
+            position: fixed;
+            left: 500px;
+            top: 0;
+            z-index: 98;
+            display: none;
+            border-right: 1px solid var(--border-color);
+        }
+
+        .sidebar .logo {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .sidebar .logo img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .nav-item {
+            padding: 15px 20px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-item:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        .nav-item.active {
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-item .arrow {
+            opacity: 0.5;
+        }
+
+        .submenu .nav-item,
+        .third-level-menu .nav-item {
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+            width: calc(100% - 250px);
+        }
+
+        .content-header {
+            margin-bottom: 20px;
+        }
+
+        .content-header h1 {
+            font-size: 24px;
+            font-weight: normal;
+            color: var(--text-color);
+        }
+
+        .settings-container {
+            background-color: var(--content-bg-color);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            flex-grow: 1;
+            margin-bottom: 20px;
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            background-color: #f8f8f8;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+
+        .setting-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--accent-color);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        .settings-btn {
+            width: 24px;
+            height: 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            opacity: 0.6;
+            transition: opacity 0.3s;
+        }
+
+        .settings-btn:hover {
+            opacity: 1;
+        }
+
+        .save-button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+            align-self: flex-end;
+            margin-top: auto;
+        }
+
+        .save-button:hover {
+            background-color: #45a049;
+        }
+
+        .user-info {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #plugins-submenu {
+            width: calc(100% - 250px);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo">
+            <img src="/static/images/logo.png" alt="PayToLeg">
+        </div>
+        <div class="nav-item {% if request.path == '/' %}active{% endif %}" data-menu="dashboard">
+            ПАНЕЛЬ
+        </div>
+        <div class="nav-item {% if 'settings' in request.path %}active{% endif %}" data-menu="settings">
+            НАСТРОЙКИ <span class="arrow">▶</span>
+        </div>
+        <div class="nav-item {% if 'plugins' in request.path %}active{% endif %}" data-menu="plugins">
+            ПЛАГИНЫ <span class="arrow">▶</span>
+        </div>
+        <div class="nav-item {% if 'logs' in request.path %}active{% endif %}" data-menu="logs">
+            ЛОГИ ТРАНЗАКЦИЙ
+        </div>
+        <div class="nav-item {% if 'clients' in request.path %}active{% endif %}" data-menu="clients">
+            КЛИЕНТЫ
+        </div>
+    </div>
+
+    <div class="submenu" id="settings-submenu">
+        <div class="nav-item" data-submenu="api">Подкл API <span class="arrow">▶</span></div>
+        <div class="nav-item" data-submenu="site">Настройки сайта <span class="arrow">▶</span></div>
+        <div class="nav-item" data-submenu="language">Настройки языка</div>
+        <div class="nav-item" data-submenu="registration">Настройки регистрации</div>
+        <div class="nav-item" data-submenu="otp">OTP</div>
+        <div class="nav-item" data-submenu="smtp">SMTP</div>
+    </div>
+
+    <div class="submenu" id="plugins-submenu">
+        <div class="content-header">
+            <h1>Настройка плагинов</h1>
+        </div>
+        <div class="settings-container">
+            <div class="setting-item">
+                <span>Переводы с карты на карту</span>
+                <div class="controls">
+                    <label class="toggle-switch">
+                        <input type="checkbox" checked>
+                        <span class="slider"></span>
+                    </label>
+                    <button class="settings-btn">⚙️</button>
+                </div>
+            </div>
+            <div class="setting-item">
+                <span>С счета на карту</span>
+                <div class="controls">
+                    <label class="toggle-switch">
+                        <input type="checkbox" checked>
+                        <span class="slider"></span>
+                    </label>
+                    <button class="settings-btn">⚙️</button>
+                </div>
+            </div>
+            <div class="setting-item">
+                <span>С карты на счет</span>
+                <div class="controls">
+                    <label class="toggle-switch">
+                        <input type="checkbox" checked>
+                        <span class="slider"></span>
+                    </label>
+                    <button class="settings-btn">⚙️</button>
+                </div>
+            </div>
+            <div class="setting-item">
+                <span>С карты на телефон</span>
+                <div class="controls">
+                    <label class="toggle-switch">
+                        <input type="checkbox" checked>
+                        <span class="slider"></span>
+                    </label>
+                    <button class="settings-btn">⚙️</button>
+                </div>
+            </div>
+            <div class="setting-item">
+                <span>С телефона на карту</span>
+                <div class="controls">
+                    <label class="toggle-switch">
+                        <input type="checkbox" checked>
+                        <span class="slider"></span>
+                    </label>
+                    <button class="settings-btn">⚙️</button>
+                </div>
+            </div>
+            <div class="setting-item">
+                <span>С кредитной карты на карту</span>
+                <div class="controls">
+                    <label class="toggle-switch">
+                        <input type="checkbox" checked>
+                        <span class="slider"></span>
+                    </label>
+                    <button class="settings-btn">⚙️</button>
+                </div>
+            </div>
+            <div class="setting-item">
+                <span>Оплата Штрафов</span>
+                <div class="controls">
+                    <label class="toggle-switch">
+                        <input type="checkbox" checked>
+                        <span class="slider"></span>
+                    </label>
+                    <button class="settings-btn">⚙️</button>
+                </div>
+            </div>
+            <div class="setting-item">
+                <span>Гос Услуги</span>
+                <div class="controls">
+                    <label class="toggle-switch">
+                        <input type="checkbox" checked>
+                        <span class="slider"></span>
+                    </label>
+                    <button class="settings-btn">⚙️</button>
+                </div>
+            </div>
+            <div class="setting-item">
+                <span>Оплата соц сетей</span>
+                <div class="controls">
+                    <label class="toggle-switch">
+                        <input type="checkbox" checked>
+                        <span class="slider"></span>
+                    </label>
+                    <button class="settings-btn">⚙️</button>
+                </div>
+            </div>
+        </div>
+        <button class="save-button">Save settings</button>
+    </div>
+
+    <div class="third-level-menu" id="api-menu">
+        <div class="nav-item">Rysgal</div>
+        <div class="nav-item">Senagat</div>
+        <div class="nav-item">Turkmenistan</div>
+        <div class="nav-item">Dayhan</div>
+        <div class="nav-item">Halk bank</div>
+    </div>
+
+    <div class="main-content">
+        <div class="user-info">
+            {% if user.is_authenticated %}
+                <span>{{ user.username }}</span>
+                <a href="/admin/logout/">Выход</a>
+            {% else %}
+                <a href="/admin/login/">Вход</a>
+            {% endif %}
+        </div>
+        {% block content %}{% endblock %}
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const navItems = document.querySelectorAll('.nav-item');
+            const settingsSubmenu = document.querySelector('#settings-submenu');
+            const pluginsSubmenu = document.querySelector('#plugins-submenu');
+            const thirdLevelMenu = document.querySelector('.third-level-menu');
+            
+            navItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    const menuType = this.getAttribute('data-menu');
+                    const submenuType = this.getAttribute('data-submenu');
+                    
+                    if (menuType === 'settings') {
+                        settingsSubmenu.style.display = 'block';
+                        pluginsSubmenu.style.display = 'none';
+                        thirdLevelMenu.style.display = 'none';
+                    } else if (menuType === 'plugins') {
+                        settingsSubmenu.style.display = 'none';
+                        pluginsSubmenu.style.display = 'block';
+                        thirdLevelMenu.style.display = 'none';
+                    } else if (submenuType === 'api') {
+                        thirdLevelMenu.style.display = 'block';
+                    } else {
+                        settingsSubmenu.style.display = 'none';
+                        pluginsSubmenu.style.display = 'none';
+                        thirdLevelMenu.style.display = 'none';
+                    }
+                    
+                    // Добавляем активный класс
+                    navItems.forEach(nav => nav.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+
+            // Обработчик для кнопки сохранения
+            const saveButton = document.querySelector('.save-button');
+            saveButton.addEventListener('click', function() {
+                const toggles = document.querySelectorAll('.toggle-switch input');
+                const settings = {};
+                
+                toggles.forEach((toggle, index) => {
+                    settings[`plugin_${index}`] = toggle.checked;
+                });
+                
+                // Здесь можно добавить отправку настроек на сервер
+                console.log('Сохраняем настройки:', settings);
+                // TODO: Добавить API-запрос для сохранения настроек
+            });
+        });
+    </script>
+</body>
+</html> 

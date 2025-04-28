@@ -1,0 +1,70 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <h1 class="display-4">Добро пожаловать в Банковскую Административную Панель</h1>
+        <p class="lead">Система управления микросервисами для банковских переводов</p>
+    </div>
+
+    <div class="col-md-6 col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">API Endpoints</h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">Управление конечными точками API микросервисов</p>
+                <a href="/api/endpoints/" class="btn btn-primary">Перейти к API</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Логи транзакций</h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">Мониторинг и анализ банковских транзакций</p>
+                <a href="/api/transactions/" class="btn btn-primary">Просмотр логов</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Конфигурации</h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">Настройка параметров сервисов и систем</p>
+                <a href="/api/configurations/" class="btn btn-primary">Настройки</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Активность пользователей</h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">Мониторинг действий пользователей системы</p>
+                <a href="/api/activities/" class="btn btn-primary">Просмотр активности</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Административная панель</h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">Полное управление системой</p>
+                <a href="/admin/" class="btn btn-primary">Перейти в админку</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

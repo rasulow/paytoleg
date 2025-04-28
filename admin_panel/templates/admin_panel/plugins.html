@@ -1,0 +1,27 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block content %}
+<div class="content-header">
+    <h1>Настройка плагинов</h1>
+</div>
+
+<form method="POST" action="{% url 'plugins' %}">
+    {% csrf_token %}
+    <div class="settings-container">
+        {% for plugin in plugins %}
+            <div class="setting-item">
+                <span>{{ plugin.name }}</span>
+                <div class="controls">
+                    <label class="toggle-switch">
+                        <input type="checkbox" name="plugin_{{ plugin.id }}" {% if plugin.is_active %}checked{% endif %}>
+                        <span class="slider"></span>
+                    </label>
+                    <button type="button" class="settings-btn">⚙️</button>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <button type="submit" class="save-button">Save settings</button>
+</form>
+{% endblock %}
