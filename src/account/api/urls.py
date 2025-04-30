@@ -21,4 +21,8 @@ urlpatterns = [
     # verification-phone
     path('registration/verify-phone/', views.UserRegistrationVerifyPhoneAPIView.as_view(), name='verify-phone'),
     path('registration/resend-phone/', views.UserRegistrationResendVerificationPhoneAPIView.as_view(), name='resend-verification-phone'),
+    
+    # verification-email
+    path('registration/verify-email/', views.UserRegistrationVerifyEmailAPIView.as_view(), name='verify-email'),
+    path('registration/resend-email/', views.UserRegistrationResendVerificationEmailAPIView.as_view(), name='resend-verification-email'),
 ]

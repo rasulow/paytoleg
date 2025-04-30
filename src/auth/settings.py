@@ -141,3 +141,15 @@ SWAGGER_SETTINGS = {
 CELERY_BROKER_URL = 'redis://:redis_password@redis:6379/0'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
+
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 465
+EMAIL_USE_SSL = True
+EMAIL_USE_TLS = False
+
+EMAIL_HOST_USER = 'rastygt500@gmail.com'
+EMAIL_HOST_PASSWORD = env['EMAIL_HOST_PASSWORD']
+
+DEFAULT_FROM_EMAIL = 'NB-Toleg <rastygt500@gmail.com>'

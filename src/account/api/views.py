@@ -125,3 +125,69 @@ class UserRegistrationResendVerificationPhoneAPIView(APIView):
                 )
         logger.warning("Invalid resend verification data received")
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    
+class UserRegistrationVerifyEmailAPIView(APIView):
+    """API endpoint to verify a email with a code."""
+
+    @swagger_auto_schema(
+        request_body=serializers.UserRegistrationVerifyEmailSerializer,
+        responses={
+            200: "Email verified",
+            400: "Bad Request",
+            500: "Internal Server Error",
+        },
+        operation_description="Verify a email using the provided verification code.",
+        tags=['verification-email']
+    )
+    def post(self, request):
+        """Handle POST requests to verify a email."""
+        serializer = serializers.UserRegistrationVerifyEmailSerializer(data=request.data)
+        if serializer.is_valid():
+            try:
+                serializer.save()
+                return Response(
+                    {"detail": "Email verified successfully"},
+                    status=status.HTTP_200_OK
+                )
+            except Exception as e:
+                return Response(
+                    {"detail": f"Error verifying email: {str(e)}"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    
+class UserRegistrationResendVerificationEmailAPIView(APIView):
+    """API endpoint to resend a verification code to an unverified email."""
+
+    @swagger_auto_schema(
+        request_body=serializers.UserRegistrationResendEmailVerificationSerializer,
+        responses={
+            201: "Verification code resent",
+            400: "Bad Request",
+            500: "Internal Server Error",
+        },
+        operation_description="Resend a verification code to an unverified email.",
+        tags=['verification-email']
+    )
+    def post(self, request):
+        """Handle POST requests to resend a email verification code."""
+        serializer = serializers.UserRegistrationResendEmailVerificationSerializer(data=request.data)
+        if serializer.is_valid():
+            try:
+                user = serializer.save()
+                response_data = {
+                    "detail": "Verification code resent successfully",
+                    "expiration_time_in_minutes": int(env.get('PHONE_NUMBER_VERIFICATION_CODE_EXPIRATION_MINUTES', 10))
+                }
+                logger.info(f"Successfully resent verification code")
+                return Response(response_data, status=status.HTTP_201_CREATED)
+            except Exception as e:
+                logger.error(f"Error resending verification code: {str(e)}")
+                return Response(
+                    {"detail": f"Error resending verification code: {str(e)}"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+        logger.warning("Invalid resend verification data received")
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

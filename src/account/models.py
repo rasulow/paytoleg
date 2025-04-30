@@ -102,3 +102,49 @@ class PhoneVerification(models.Model):
     @staticmethod
     def gen_code():
         return str(random.randint(100000, 999999))
+
+
+class EmailVerification(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="email_verifications")
+    email = models.EmailField(unique=True)
+    code = models.CharField(max_length=6)
+    is_verified = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'email_verification'
+        verbose_name = 'Email Verification'
+        verbose_name_plural = 'Email Verifications'
+        ordering = ['-id']
+
+    def __str__(self):
+        return f"{self.email} - {'Verified' if self.is_verified else 'Not Verified'}"
+
+
+    def save(self, *args, **kwargs):
+        is_new = self._state.adding
+        super().save(*args, **kwargs)
+
+        if is_new:
+            logger.info(
+                'New email verification created',
+                extra={
+                    'user_id': self.user.id,
+                    'email': self.email
+                }
+            )
+
+        if self.is_verified and not self.user.is_email_verified:
+            self.user.is_email_verified = True
+            self.user.save()
+            logger.info(
+                'Email verified successfully',
+                extra={
+                    'user_id': self.user.id,
+                    'email': self.email
+                }
+            )
+
+    @staticmethod
+    def gen_code():
+        return str(random.randint(100000, 999999))

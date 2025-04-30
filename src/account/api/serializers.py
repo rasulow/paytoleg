@@ -42,24 +42,20 @@ class UserRegisterSerializer(serializers.Serializer):
         password1 = attrs.get('password1')
         password2 = attrs.get('password2')
 
-        # Check if either email or phone_number is provided
         if not email and not phone_number:
             logger.warning('Registration attempt without email and phone number')
             raise serializers.ValidationError(
                 {'non_field_errors': 'Either email or phone number is required.'}
             )
 
-        # Check if passwords match
         if password1 != password2:
             logger.warning('Registration attempt with mismatched passwords')
             raise serializers.ValidationError({'password2': 'Passwords must match.'})
 
-        # Check if email is unique
         if email and models.CustomUser.objects.filter(email=email).exists():
             logger.warning(f'Registration attempt with existing email: {email}')
             raise serializers.ValidationError({'email': 'A user with this email already exists.'})
 
-        # Check if phone number is unique
         if phone_number and models.CustomUser.objects.filter(phone_number=phone_number).exists():
             logger.warning(f'Registration attempt with existing phone number: {phone_number}')
             raise serializers.ValidationError(
@@ -81,7 +77,16 @@ class UserRegisterSerializer(serializers.Serializer):
             logger.info(f'New user created successfully. ID: {user.id}, Email: {user.email}, Phone: {user.phone_number}')
 
             if validated_data.get('phone_number'):
-                return self._create_phone_verification(user, validated_data['phone_number'])
+                return self._create_phone_verification(
+                    user, 
+                    validated_data['phone_number'],
+                )
+            
+            if validated_data.get('email'):
+                return self._create_email_verification(
+                    user, 
+                    validated_data['email']
+                )
 
         except Exception as e:
             logger.error(f'Error creating user: {str(e)}', exc_info=True)
@@ -97,7 +102,27 @@ class UserRegisterSerializer(serializers.Serializer):
             is_verified=False
         )
         logger.info(f'Phone verification code created for user {user.id}')
-        # services.send_sms(phone_number, verification_code)
+        result = services.send_sms(phone_number, verification_code)
+        if result:
+            logger.info(f'Verification code sent successfully to {phone_number} with verification code: {verification_code}')
+        else:
+            logger.error(f'Failed to send verification code to {phone_number} with verification code: {verification_code}')
+        return verification_code
+    
+    def _create_email_verification(self, user, email):
+        verification_code = models.EmailVerification.gen_code()
+        email_verification = models.EmailVerification.objects.create(
+            user=user,
+            email=email,
+            code=verification_code,
+            is_verified=False
+        )
+        logger.info(f'Email verification code created for user {user.id}')
+        result = services.send_email([email], verification_code)
+        if result:
+            logger.info(f'Email sent successfully to {email} with verification code: {verification_code}')
+        else:
+            logger.error(f'Failed to send email to {email} with verification code: {verification_code}')
         return verification_code
 
 
@@ -188,3 +213,92 @@ class UserRegistrationResendPhoneVerificationSerializer(serializers.Serializer):
         except models.CustomUser.DoesNotExist:
             logger.error(f'User not found for phone number: {phone_number}')
             raise serializers.ValidationError({'phone_number': 'User with this phone number not found.'})
+        
+        
+class UserRegistrationVerifyEmailSerializer(serializers.Serializer):
+    """Serializer for verifying a email."""
+    email = serializers.EmailField(required=True)
+    code = serializers.CharField(required=True, max_length=6)
+
+    def validate(self, attrs):
+        """Validate email and verification code."""
+        email = attrs.get('email')
+        code = attrs.get('code')
+
+        if not email or not code:
+            logger.warning('Email verification attempt without email address or code')
+            raise serializers.ValidationError({'non_field_errors': 'Email and code are required.'})
+
+        try:
+            email_verification = models.EmailVerification.objects.get(email=email, code=code)
+        except models.PhoneVerification.DoesNotExist:
+            logger.warning(f'Invalid phone verification attempt for number: {email}')
+            raise serializers.ValidationError({'non_field_errors': 'Invalid email or code.'})
+
+        if email_verification.is_verified:
+            logger.info(f'Attempted verification of already verified email: {email}')
+            raise serializers.ValidationError({'email': 'This email is already verified.'})
+
+        expiration_time = timezone.now() - timedelta(minutes=int(env.get('PHONE_NUMBER_VERIFICATION_CODE_EXPIRATION_MINUTES', 10)))
+        if email_verification.created_at < expiration_time:
+            logger.warning(f'Expired verification code used for email: {email}')
+            raise serializers.ValidationError({'code': 'The verification code has expired.'})
+
+        attrs['email_verification'] = email_verification
+        return attrs
+
+    def create(self, validated_data):
+        """Confirm email verification."""
+        email_verification = validated_data['email_verification']
+        email_verification.is_verified = True
+        email_verification.save()
+        logger.info(f'Email verified successfully for user {email_verification.user.id}')
+        return email_verification
+    
+    
+class UserRegistrationResendEmailVerificationSerializer(serializers.Serializer):
+    """Serializer for resending a email code."""
+    email = serializers.EmailField(required=True)
+
+    def validate(self, attrs):
+        """Validate email for resending verification code."""
+        email = attrs.get('email')
+
+        if not email:
+            logger.warning('Resend verification attempt without email')
+            raise serializers.ValidationError({'email': 'Email is required.'})
+
+        try:
+            email_verification = models.EmailVerification.objects.get(email=email)
+        except models.PhoneVerification.DoesNotExist:
+            logger.warning(f'Resend verification attempt for unregistered email: {email}')
+            raise serializers.ValidationError({'email': 'This email is not registered.'})
+
+        if email_verification.is_verified:
+            logger.info(f'Attempted resend verification for already verified email: {email}')
+            raise serializers.ValidationError({'email': 'This email is already verified.'})
+
+        attrs['email_verification'] = email_verification
+        return attrs
+
+    def create(self, validated_data):
+        """Resend a email verification code."""
+        email = validated_data['email']
+        email_verification = validated_data['email_verification']
+        email_verification.delete()
+
+        try:
+            user = models.CustomUser.objects.get(email=email)
+            verification_code = models.EmailVerification.gen_code()
+            new_email_verification = models.EmailVerification.objects.create(
+                user=user,
+                email=email,
+                code=verification_code,
+                is_verified=False
+            )
+            services.send_email([email], verification_code)
+            logger.info(f'New verification code sent to email for user {user.id}')
+            return user
+        except models.CustomUser.DoesNotExist:
+            logger.error(f'User not found for email: {email}')
+            raise serializers.ValidationError({'email': 'User with this email not found.'})

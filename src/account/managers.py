@@ -6,12 +6,12 @@ class CustomUserManager(BaseUserManager):
         if not email and not phone_number:
             raise ValueError("User must have either an email or phone number")
         
+        if email and phone_number:
+            raise ValueError("User must have either an email or phone number, not both")
+        
         if email:
             email = self.normalize_email(email)
             extra_fields['email'] = email
-
-        if not phone_number:
-            raise ValueError("Phone number is required if email is not provided.")
 
         user = self.model(phone_number=phone_number, **extra_fields)
         user.set_password(password)

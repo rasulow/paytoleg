@@ -9,3 +9,7 @@ class CustomUserAdmin(admin.ModelAdmin):
 @admin.register(models.PhoneVerification)
 class CustomPhoneVerificationAdmin(admin.ModelAdmin):
     list_display = ('id', 'user', 'phone_number', 'code', 'is_verified', 'created_at')
+
+@admin.register(models.EmailVerification)
+class CustomEmailVerificationAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user', 'email', 'code', 'is_verified', 'created_at')
